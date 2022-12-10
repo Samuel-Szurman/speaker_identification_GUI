@@ -17,6 +17,7 @@ from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 import matplotlib
+from tensorflow import keras
 
 from tkinter import *
 from tkinter.ttk import *
@@ -25,6 +26,8 @@ from time import sleep
 import pickle
 
 import PIL.Image
+
+from sklearn.preprocessing import LabelEncoder
 
 
 class App(customtkinter.CTk):
@@ -46,7 +49,10 @@ class App(customtkinter.CTk):
         self.seconds = 5
         self.n_mfcc = 40
         self.top_db = 20
-        self.loaded_model = pickle.load(open(r'models/svm.sav', 'rb'))
+        # self.loaded_model = pickle.load(open(r'models/svm.sav', 'rb'))
+        self.loaded_model = keras.models.load_model('neural_network')
+        self.label_encoder = LabelEncoder()
+        self.label_encoder.classes_ = np.load(r'neural_network/labels.npy')
         image_record = customtkinter.CTkImage(light_image=PIL.Image.open(r'images/record.png'),
                                               size=(80, 100))
 
@@ -152,12 +158,7 @@ class App(customtkinter.CTk):
         data = np.squeeze(recorded_voice)
         data = librosa.util.normalize(data)
         data = librosa.effects.trim(data, top_db=self.top_db)[0]
-        mfcc = [np.mean(librosa.feature.mfcc(y=data, sr=self.fs, n_mfcc=self.n_mfcc).T, axis=0)]
-        result = self.loaded_model.predict(mfcc)[0]
-
-        result_string = "Witaj, " + result
-        self.label_result.configure(text=result_string)
-        self.panel_result.tkraise()
+        self.predict(data)
 
     def record_voice(self):
         thread_countdown = Thread(target=self.countdown)
@@ -171,11 +172,17 @@ class App(customtkinter.CTk):
             data, sample_rate = librosa.load(path, sr=self.fs)
             data = librosa.util.normalize(data)
             data = librosa.effects.trim(data, top_db=self.top_db)[0]
-            mfcc = [np.mean(librosa.feature.mfcc(y=data, sr=self.fs, n_mfcc=self.n_mfcc).T, axis=0)]
-            result = self.loaded_model.predict(mfcc)[0]
-            result_string = "Witaj, " + result
-            self.label_result.configure(text=result_string)
-            self.panel_result.tkraise()
+            self.predict(data)
+
+    def predict(self, data):
+        mfcc = np.mean(librosa.feature.mfcc(y=data, sr=self.fs, n_mfcc=self.n_mfcc).T, axis=0)
+        mfcc_scaled_features = mfcc.reshape(1, -1)
+        predicted_label = self.loaded_model.predict(mfcc_scaled_features)
+        prediction_index = np.argmax(predicted_label, axis=1)
+        result = self.label_encoder.inverse_transform(prediction_index)[0]
+        result_string = "Witaj, "+result
+        self.label_result.configure(text=result_string)
+        self.panel_result.tkraise()
 
 
 if __name__ == '__main__':
