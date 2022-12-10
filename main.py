@@ -40,6 +40,7 @@ class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
         customtkinter.set_appearance_mode("Dark")
+        customtkinter.set_default_color_theme("green")
 
         default_font = tkinter.font.nametofont("TkDefaultFont")
         self.TITLE_FONT = (default_font, App.FONT_TITLE_SIZE)
@@ -53,8 +54,8 @@ class App(customtkinter.CTk):
         self.loaded_model = keras.models.load_model('neural_network')
         self.label_encoder = LabelEncoder()
         self.label_encoder.classes_ = np.load(r'neural_network/labels.npy')
-        image_record = customtkinter.CTkImage(light_image=PIL.Image.open(r'images/record.png'),
-                                              size=(80, 100))
+        image_record = customtkinter.CTkImage(light_image=PIL.Image.open(r'images/transparent_microphone.png'),
+                                              size=(100, 100))
 
         self.title("System identyfikacji osoby za pomocą głosu")
         self.geometry("800x600")
@@ -79,17 +80,20 @@ class App(customtkinter.CTk):
 
         self.label_import_title = customtkinter.CTkLabel(master=self.panel_import,
                                                          text="System identyfikacji osoby na podstawie głosu",
+                                                         text_color="#2CC985",
                                                          font=self.TITLE_FONT)
         self.label_import_title.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
 
         self.button_record = customtkinter.CTkButton(master=self.panel_import,
                                                      text="Nagraj głos",
+                                                     text_color="gray14",
                                                      font=self.INFO_FONT,
                                                      command=self.go_to_record_panel)
         self.button_record.grid(row=1, column=0, sticky="nsew", padx=20, pady=20)
 
         self.button_import = customtkinter.CTkButton(master=self.panel_import,
                                                      text="Importuj nagranie",
+                                                     text_color="gray14",
                                                      font=self.INFO_FONT,
                                                      command=self.import_audio)
         self.button_import.grid(row=2, column=0, sticky="nsew", padx=20, pady=20)
@@ -100,6 +104,7 @@ class App(customtkinter.CTk):
 
         self.label_record_title = customtkinter.CTkLabel(master=self.panel_record,
                                                          text="Naciśnij przycisk mikrofonu, aby nagrać głos.",
+                                                         text_color="#2CC985",
                                                          font=self.TITLE_FONT)
         self.label_record_title.grid(row=0, column=0, padx=20, pady=20)
 
@@ -108,37 +113,53 @@ class App(customtkinter.CTk):
                                                      width=120,
                                                      height=120,
                                                      text_color="black",
+                                                     # corner_radius=20,
                                                      image=image_record,
                                                      command=self.record_voice)
         self.button_record.grid(row=1, column=0, padx=20, pady=20)
 
         self.label_record_info = customtkinter.CTkLabel(master=self.panel_record,
                                                         text="",
+                                                        text_color="#2CC985",
                                                         font=self.INFO_FONT)
         self.label_record_info.grid(row=2, column=0, padx=20, pady=20)
 
         self.button_return_1 = customtkinter.CTkButton(master=self.panel_record,
                                                        text="Powrót",
+                                                       text_color="gray14",
+                                                       text_color_disabled="gray14",
                                                        font=self.INFO_FONT,
                                                        command=self.return_to_main)
         self.button_return_1.grid(row=3, column=0, columnspan=2, sticky="nsew", padx=20, pady=20)
 
         # panel z wynikami
-        self.panel_result.rowconfigure((0, 1), weight=1)
+        self.panel_result.rowconfigure((0, 1, 2, 3), weight=1)
         self.panel_result.columnconfigure(0, weight=1)
+
+        self.empty_label_1 = customtkinter.CTkLabel(master=self.panel_result,
+                                                    text="")
+        self.empty_label_1.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
 
         self.label_result = customtkinter.CTkLabel(master=self.panel_result,
                                                    text="Wykryto osobę: ",
+                                                   text_color="#2CC985",
                                                    font=self.TITLE_FONT)
-        self.label_result.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
+        self.label_result.grid(row=1, column=0, sticky="nsew", padx=20, pady=20)
+
+        self.empty_label_2 = customtkinter.CTkLabel(master=self.panel_result,
+                                                    text="")
+        self.empty_label_2.grid(row=2, column=0, sticky="nsew", padx=20, pady=20)
 
         self.button_return_2 = customtkinter.CTkButton(master=self.panel_result,
-                                                       text="Powrót",
+                                                       text="Spróbuj jeszcze raz",
+                                                       text_color="gray14",
                                                        font=self.INFO_FONT,
                                                        command=self.return_to_main)
-        self.button_return_2.grid(row=1, column=0, sticky="nsew", padx=20, pady=20)
+        self.button_return_2.grid(row=3, column=0, sticky="nsew", padx=20, pady=20)
 
     def go_to_record_panel(self):
+        self.button_record.configure(state=customtkinter.NORMAL)
+        self.button_return_1.configure(state=customtkinter.NORMAL)
         self.panel_record.tkraise()
 
     def return_to_main(self):
@@ -147,7 +168,7 @@ class App(customtkinter.CTk):
     def countdown(self):
         seconds = 5
         while seconds >= 0:
-            self.label_record_info.configure(text="Pozostało sekund: " + str(seconds))
+            self.label_record_info.configure(text="Pozostało sekund: "+str(seconds))
             sleep(1)
             seconds -= 1
         self.label_record_info.configure(text="")
@@ -165,6 +186,8 @@ class App(customtkinter.CTk):
         thread_record = Thread(target=self.record)
         thread_countdown.start()
         thread_record.start()
+        self.button_return_1.configure(state=customtkinter.DISABLED)
+        self.button_record.configure(state=customtkinter.DISABLED)
 
     def import_audio(self):
         path = filedialog.askopenfilename(title="Wybierz obraz", filetypes=App.AUDIO_TYPES)
