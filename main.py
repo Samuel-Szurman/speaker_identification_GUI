@@ -3,30 +3,13 @@ from tkinter import filedialog
 
 import customtkinter
 import sounddevice
-from scipy.io.wavfile import write
-
-import glob
 import numpy as np
 import librosa
 import librosa.display
-import time
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
-from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestClassifier
-import matplotlib
 from tensorflow import keras
-
-from tkinter import *
-from tkinter.ttk import *
 from threading import Thread
 from time import sleep
-import pickle
-
 import PIL.Image
-
 from sklearn.preprocessing import LabelEncoder
 
 
@@ -50,7 +33,7 @@ class App(customtkinter.CTk):
         self.seconds = 5
         self.n_mfcc = 40
         self.top_db = 20
-        # self.loaded_model = pickle.load(open(r'models/svm.sav', 'rb'))
+
         self.loaded_model = keras.models.load_model('neural_network')
         self.label_encoder = LabelEncoder()
         self.label_encoder.classes_ = np.load(r'neural_network/labels.npy')
